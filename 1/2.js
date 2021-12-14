@@ -1,13 +1,13 @@
-import { getLinesFromFile } from "../utils";
+import { getLinesFromFile } from '../utils';
 
-const input = await getLinesFromFile("1/input.txt");
+const input = await getLinesFromFile('input.txt');
 
 const result = input
   .map(Number)
   .reduce((acc, x, i, all) => {
-    const group = [all[i], all[i + 1], all [i + 2]]
+    const group = [all[i], all[i + 1], all [i + 2]];
 
-    acc.push(group)
+    acc.push(group);
 
     return acc;
   }, [])
