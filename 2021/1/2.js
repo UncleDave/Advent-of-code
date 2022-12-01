@@ -1,4 +1,4 @@
-import { getLinesFromFile } from '../utils';
+import { getLinesFromFile } from '../utils.js';
 
 const input = await getLinesFromFile('input.txt');
 

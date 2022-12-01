@@ -1,20 +1,20 @@
-import { getLinesFromFile } from '../utils';
+import { getLinesFromFile } from '../utils.js';
 
 const input = await getLinesFromFile('input.txt');
 
 const finalPosition = input
   .map(x => x.split(' '))
   .map(([instruction, power]) => [instruction, Number(power)])
-  .reduce(([h, d], [instruction, power]) => {
+  .reduce(([h, d, a], [instruction, power]) => {
     switch (instruction) {
       case 'forward':
-        return [h + power, d];
+        return [h + power, d + a * power, a];
       case 'up':
-        return [h, d - power];
+        return [h, d, a - power];
       case 'down':
-        return [h, d + power];
+        return [h, d, a + power];
     }
-  }, [0, 0]);
+  }, [0, 0, 0]);
 
 const result = finalPosition[0] * finalPosition[1];
 

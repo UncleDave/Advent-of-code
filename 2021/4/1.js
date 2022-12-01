@@ -1,4 +1,4 @@
-import { getLinesFromFile } from '../utils';
+import { getLinesFromFile } from '../utils.js';
 
 const input = await getLinesFromFile('input.txt');
 const numbers = input.splice(0, 1)[0].split(',');
