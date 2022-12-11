@@ -1,3 +1,4 @@
+import { clearInterval } from 'timers';
 import { getLinesFromFile } from '../utils';
 
 type Direction = 'U' | 'R' | 'D' | 'L';
@@ -46,6 +47,7 @@ function clamp(value: number, min: number, max: number): number {
   const knots = Array.from({ length: 9 }, () => [0, 0] as Position);
   const lastKnot = knots[knots.length - 1];
   const lastKnotVisitedPositions: Position[] = [[0, 0]];
+  const stateSnapshots: Position[][] = [Array.from({ length: 10 }, () => [0, 0] as Position)];
 
   function pushIfUnique(position: Position) {
     const [x, y] = position;
@@ -70,8 +72,44 @@ function clamp(value: number, min: number, max: number): number {
       });
 
       pushIfUnique(lastKnot);
+      stateSnapshots.push([
+        [...headKnot],
+        ...knots.map(x => [...x] as Position),
+      ]);
     }
   });
 
-  console.log(lastKnotVisitedPositions.length);
+  stateSnapshots.splice(501);
+  const allPositions = stateSnapshots.flat();
+  const allX = allPositions.map(x => x[0]);
+  const allY = allPositions.map(x => x[1]);
+
+  const leftmost = Math.min(...allX);
+  const rightmost = Math.max(...allX);
+  const lowest = Math.min(...allY);
+  const highest = Math.max(...allY);
+
+  let currentSnapshotIndex = 0;
+
+  const interval = setInterval(() => {
+    if (currentSnapshotIndex === stateSnapshots.length) {
+      clearInterval(interval);
+      return;
+    }
+
+    console.clear();
+    const snapshot = stateSnapshots[currentSnapshotIndex];
+
+    for (let i = highest; i >= lowest; i--) {
+      for (let j = leftmost; j <= rightmost; j++) {
+        const knotIndex = snapshot.findIndex(([x, y]) => x === j && y === i);
+        process.stdout.write(knotIndex !== -1 ? knotIndex.toString() : '.');
+      }
+
+      process.stdout.write('\n');
+    }
+
+    currentSnapshotIndex++;
+    console.log(lastKnotVisitedPositions.length);
+  }, 250);
 })();
