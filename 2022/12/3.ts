@@ -1,6 +1,6 @@
 import { getLinesFromFile } from '../utils';
-import { GridPosition } from './grid-graph';
-import { HeightmapGridGraph, HeightmapGridNode } from './heightmap-grid-graph';
+import { GridPosition } from '../graphs/grid-graph';
+import { HeightmapGridGraph, HeightmapGridNode } from '../graphs/heightmap-grid-graph';
 
 (async function () {
   const input = await getLinesFromFile('input.txt');
@@ -19,4 +19,6 @@ import { HeightmapGridGraph, HeightmapGridNode } from './heightmap-grid-graph';
     1,
     Infinity,
   );
+
+  graph.initEdges();
 })();

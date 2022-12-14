@@ -1,3 +1,4 @@
+import { mapMax, mapMin } from '../utils';
 import { Graph } from './graph';
 
 export class GridPosition {
@@ -20,6 +21,34 @@ export class GridPosition {
   equals(otherPosition: GridPosition): boolean {
     return this.x === otherPosition.x && this.y === otherPosition.y;
   }
+
+  private value(): number {
+    return this.x + this.y;
+  }
+
+  static min(...positions: GridPosition[]): GridPosition {
+    return mapMin(positions, position => position.value());
+  }
+
+  static max(...positions: GridPosition[]): GridPosition {
+    return mapMax(positions, position => position.value());
+  }
+
+  static minX(...positions: GridPosition[]): number {
+    return Math.min(...positions.map(position => position.x));
+  }
+
+  static maxX(...positions: GridPosition[]): number {
+    return Math.max(...positions.map(position => position.x));
+  }
+
+  static minY(...positions: GridPosition[]): number {
+    return Math.min(...positions.map(position => position.y));
+  }
+
+  static maxY(...positions: GridPosition[]): number {
+    return Math.max(...positions.map(position => position.y));
+  }
 }
 
 export class GridNode {
@@ -32,6 +61,10 @@ export class GridNode {
 }
 
 export class GridGraph<T extends GridNode = GridNode> extends Graph<T> {
+  constructor(nodes: T[], private readonly allowDiagonals: boolean) {
+    super(nodes);
+  }
+
   protected adjacent(node: T, otherNode: T): boolean {
     return node.distance(otherNode) === 1;
   }
