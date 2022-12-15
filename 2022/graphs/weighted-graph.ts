@@ -8,7 +8,7 @@ export class WeightedEdge<T> extends Edge<T> {
 
 export type GetEdgeWeight<T> = (node: T, otherNode: T) => number;
 
-export class WeightedGraph<T> extends AbstractGraph<T, WeightedEdge<T>> {
+export class WeightedGraph<T extends object> extends AbstractGraph<T, WeightedEdge<T>> {
   constructor(nodes: T[], private readonly getEdgeWeight: GetEdgeWeight<T>) {
     super(nodes);
   }

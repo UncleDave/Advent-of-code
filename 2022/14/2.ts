@@ -18,28 +18,19 @@ class Wall {
   }
 }
 
-function nodeIsAtMaxY(node: GridNode, maxY: number): boolean {
-  return node.position.y === maxY;
-}
-
-function nodeIsAtMinX(node: GridNode, minX: number): boolean {
-  return node.position.x === minX;
-}
-
 function nodeHasNoEdges<T extends object>(node: T, graph: AbstractGraph<T>): boolean {
   return graph.edgesFrom(node).length === 0;
 }
 
-function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: WeightedGridGraph, sandOrigin: GridPosition, minX: number, maxY: number): GridPosition[] {
-  const startNode = graph.node(sandOrigin);
+function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: WeightedGridGraph, sandOrigin: GridPosition): GridPosition[] {
   const sandPositions: GridPosition[] = [];
-  let node = startNode;
+  let node = graph.node(sandOrigin);
 
-  while (node && !nodeIsAtMaxY(node, maxY) && !(nodeIsAtMinX(node, minX) && nodeHasNoEdges(node, graph))) {
+  while (node) {
     if (nodeHasNoEdges(node, graph)) {
       sandPositions.push(node.position);
       graph.removeNode(node);
-      node = startNode;
+      node = graph.node(sandOrigin);
       continue;
     }
 
@@ -80,11 +71,19 @@ function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: Weighte
   const wallEndPositions = walls.map(x => x.end);
   const sandOrigin = new GridPosition(500, 0);
 
-  const minX = GridPosition.minX(...wallStartPositions, sandOrigin);
-  const maxX = GridPosition.maxX(...wallEndPositions, sandOrigin);
-
   const minY = GridPosition.minY(...wallStartPositions, sandOrigin);
-  const maxY = GridPosition.maxY(...wallEndPositions, sandOrigin);
+  const maxY = GridPosition.maxY(...wallEndPositions, sandOrigin) + 2;
+
+  const floorStart = new GridPosition(sandOrigin.x / 2, maxY);
+  const floorEnd = new GridPosition(sandOrigin.x + sandOrigin.x / 2, maxY);
+
+  walls.push(new Wall(
+    floorStart,
+    floorEnd,
+  ));
+
+  const minX = GridPosition.minX(...wallStartPositions, sandOrigin, floorStart);
+  const maxX = GridPosition.maxX(...wallEndPositions, sandOrigin, floorEnd);
 
   const grid = [...Array(maxY - minY + 1).keys()]
     .map(y => [...Array(maxX - minX + 1).keys()]
@@ -108,7 +107,7 @@ function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: Weighte
 
   graph.initEdges();
 
-  const allTheSand = howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph, sandOrigin, minX, maxY);
+  const allTheSand = howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph, sandOrigin);
   const logger = new SequentialLogger();
 
   logger.enqueue('+', [sandOrigin.x - minX, sandOrigin.y]);
@@ -129,5 +128,5 @@ function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: Weighte
 
   await logger.write();
 
-  process.stdout.write(`Dropped ${allTheSand.length} sands`);
+  process.stdout.write(`Dropped ${ allTheSand.length } sands`);
 })();

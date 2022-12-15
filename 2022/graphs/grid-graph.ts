@@ -1,6 +1,12 @@
 import { mapMax, mapMin } from '../utils';
 import { Graph } from './graph';
 
+interface Distance {
+  sum: number;
+  x: number;
+  y: number;
+}
+
 export class GridPosition {
   constructor(public readonly x: number, public readonly y: number) {
   }
@@ -14,8 +20,15 @@ export class GridPosition {
     return new GridPosition(this.x + position.x, this.y + position.y);
   }
 
-  manhattanDistance(otherPosition: GridPosition): number {
-    return Math.abs(this.x - otherPosition.x) + Math.abs(this.y - otherPosition.y);
+  manhattanDistance(otherPosition: GridPosition): Distance {
+    const xDistance = Math.abs(this.x - otherPosition.x);
+    const yDistance = Math.abs(this.y - otherPosition.y);
+
+    return {
+      sum: xDistance + yDistance,
+      x: xDistance,
+      y: yDistance,
+    };
   }
 
   equals(otherPosition: GridPosition): boolean {
@@ -26,11 +39,11 @@ export class GridPosition {
     return this.x + this.y;
   }
 
-  static min(...positions: GridPosition[]): GridPosition {
+  static min(...positions: GridPosition[]): GridPosition | undefined {
     return mapMin(positions, position => position.value());
   }
 
-  static max(...positions: GridPosition[]): GridPosition {
+  static max(...positions: GridPosition[]): GridPosition | undefined {
     return mapMax(positions, position => position.value());
   }
 
@@ -55,17 +68,24 @@ export class GridNode {
   constructor(public readonly position: GridPosition) {
   }
 
-  distance(otherNode: GridNode): number {
+  distance(otherNode: GridNode): Distance {
     return this.position.manhattanDistance(otherNode.position);
   }
 }
 
 export class GridGraph<T extends GridNode = GridNode> extends Graph<T> {
-  constructor(nodes: T[], private readonly allowDiagonals: boolean) {
+  constructor(nodes: T[], private readonly diagonalsAreAdjacent = false) {
     super(nodes);
   }
 
+  public node(position: GridPosition): T | undefined {
+    return this.nodes.find(node => node.position.equals(position));
+  }
+
   protected adjacent(node: T, otherNode: T): boolean {
-    return node.distance(otherNode) === 1;
+    const distance = node.distance(otherNode);
+    const distanceToCompare = this.diagonalsAreAdjacent ? Math.max(distance.x, distance.y) : distance.sum;
+
+    return distanceToCompare === 1;
   }
 }
