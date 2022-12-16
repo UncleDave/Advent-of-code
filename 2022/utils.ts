@@ -57,3 +57,20 @@ export class SequentialLogger {
       .then(() => this.startWriting());
   }
 }
+
+export function pairwise<T, U>(arrayLike: ArrayLike<T>, mapper: (firstValue: T, secondValue: T) => U): U[] {
+  const result: U[] = [];
+
+  for (let i = 0; i < arrayLike.length; i += 2) {
+    result.push(mapper(arrayLike[i], arrayLike[i + 1]));
+  }
+
+  return result;
+}
+
+type DistinctComparator<T> = (previousValue: T[], currentValue: T) => boolean;
+const defaultDistinctComparator: DistinctComparator<any> = (previousValue, currentValue) => previousValue.indexOf(currentValue) === -1;
+
+export function distinct<T>(previousValue: T[], currentValue: T, comparator: DistinctComparator<T> = defaultDistinctComparator): T[] {
+  return comparator(previousValue, currentValue) ? [...previousValue, currentValue] : previousValue;
+}
