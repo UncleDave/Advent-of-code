@@ -1,5 +1,5 @@
-import { GridPosition } from '../graphs/grid-graph';
 import { promises as fs } from 'fs';
+import { GridPosition } from '../graphs/grid-graph';
 import { pairwise } from '../utils';
 
 class Sensor {
@@ -44,14 +44,7 @@ const inputRegex = /[x,y]=(?<position>-*\d+)/g;
       sensors
         .map(x => x.overlappingTiles(i))
         .filter((x): x is [number, number] => x !== undefined)
-        .filter(([start, end]) => start >= 0 && end <= maxCoordinate),
-    );
-  }
-
-  console.log(
-    overlappingTiles
-      .map(coveredRanges =>
-        coveredRanges.reduce<[number, number][]>((coveredRanges, currentRange) => {
+        .reduce<[number, number][]>((coveredRanges, currentRange) => {
           if (coveredRanges.some(range => range[0] <= currentRange[0] && range[1] >= currentRange[1]))
             return coveredRanges;
 
@@ -63,7 +56,57 @@ const inputRegex = /[x,y]=(?<position>-*\d+)/g;
               currentRange,
             ];
 
-          const partiallyExpandedRanges = coveredRanges.filter(range => currentRange[0] < range[0] || currentRange[1] > range[1]);
+          const partiallyExpandedRanges = coveredRanges.filter(range => (currentRange[0] < range[0] && currentRange[1] >= range[0]) || (currentRange[1] > range[1] && currentRange[0] <= range[1]));
+
+          if (partiallyExpandedRanges.length)
+            return [
+              ...coveredRanges.filter(range => !partiallyExpandedRanges.includes(range)),
+              ...partiallyExpandedRanges.map<[number, number]>(range => [Math.min(range[0], currentRange[0]), Math.max(range[1], currentRange[1])]),
+            ];
+
+          return [
+            ...coveredRanges,
+            currentRange,
+          ];
+        }, [])
+        .reduce<[number, number][]>((coveredRanges, currentRange) => {
+          if (coveredRanges.some(range => range[0] <= currentRange[0] && range[1] >= currentRange[1]))
+            return coveredRanges;
+
+          const expandedRanges = coveredRanges.filter(range => currentRange[0] < range[0] && currentRange[1] > range[1]);
+
+          if (expandedRanges.length)
+            return [
+              ...coveredRanges.filter(range => !expandedRanges.includes(range)),
+              currentRange,
+            ];
+
+          const partiallyExpandedRanges = coveredRanges.filter(range => (currentRange[0] < range[0] && currentRange[1] >= range[0]) || (currentRange[1] > range[1] && currentRange[0] <= range[1]));
+
+          if (partiallyExpandedRanges.length)
+            return [
+              ...coveredRanges.filter(range => !partiallyExpandedRanges.includes(range)),
+              ...partiallyExpandedRanges.map<[number, number]>(range => [Math.min(range[0], currentRange[0]), Math.max(range[1], currentRange[1])]),
+            ];
+
+          return [
+            ...coveredRanges,
+            currentRange,
+          ];
+        }, [])
+        .reduce<[number, number][]>((coveredRanges, currentRange) => {
+          if (coveredRanges.some(range => range[0] <= currentRange[0] && range[1] >= currentRange[1]))
+            return coveredRanges;
+
+          const expandedRanges = coveredRanges.filter(range => currentRange[0] < range[0] && currentRange[1] > range[1]);
+
+          if (expandedRanges.length)
+            return [
+              ...coveredRanges.filter(range => !expandedRanges.includes(range)),
+              currentRange,
+            ];
+
+          const partiallyExpandedRanges = coveredRanges.filter(range => (currentRange[0] < range[0] && currentRange[1] >= range[0]) || (currentRange[1] > range[1] && currentRange[0] <= range[1]));
 
           if (partiallyExpandedRanges.length)
             return [
@@ -76,7 +119,18 @@ const inputRegex = /[x,y]=(?<position>-*\d+)/g;
             currentRange,
           ];
         }, []),
-      )
-      .filter(x => x.length > 1),
-  );
+    );
+  }
+
+  const overlappingTilesByY = overlappingTiles
+    .map((ranges, i) => ranges
+      .map(([minX, maxX]) => ({
+        minX,
+        maxX,
+        y: i,
+      })),
+    );
+
+  // 11,600,823,139,120
+  console.log(overlappingTilesByY.filter(x => x.some(({ minX, maxX }) => minX <= 0 && maxX < maxCoordinate))[0]);
 })();
