@@ -1,4 +1,5 @@
-import { GridGraph, GridNode, GridPosition } from './grid-graph';
+import { GridGraph } from './grid-graph';
+import { GridNode, GridPosition } from './abstract-grid-graph';
 
 export class HeightmapGridNode extends GridNode {
   constructor(position: GridPosition, public readonly height: number) {

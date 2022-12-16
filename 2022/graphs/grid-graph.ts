@@ -1,91 +1,12 @@
-import { mapMax, mapMin } from '../utils';
-import { Graph } from './graph';
+import { Edge } from './abstract-graph';
+import { AbstractGridGraph, GridNode } from './abstract-grid-graph';
 
-interface Distance {
-  sum: number;
-  x: number;
-  y: number;
-}
-
-export class GridPosition {
-  constructor(public readonly x: number, public readonly y: number) {
+export class GridGraph<T extends GridNode = GridNode> extends AbstractGridGraph<T> {
+  constructor(nodes: T[], diagonalsAreAdjacent = false) {
+    super(nodes, diagonalsAreAdjacent);
   }
 
-  add(position: GridPosition): GridPosition;
-  add(position: [number, number]): GridPosition;
-  add(position: [number, number] | GridPosition): GridPosition {
-    if (position instanceof Array)
-      return this.add(new GridPosition(position[0], position[1]));
-
-    return new GridPosition(this.x + position.x, this.y + position.y);
-  }
-
-  manhattanDistance(otherPosition: GridPosition): Distance {
-    const xDistance = Math.abs(this.x - otherPosition.x);
-    const yDistance = Math.abs(this.y - otherPosition.y);
-
-    return {
-      sum: xDistance + yDistance,
-      x: xDistance,
-      y: yDistance,
-    };
-  }
-
-  equals(otherPosition: GridPosition): boolean {
-    return this.x === otherPosition.x && this.y === otherPosition.y;
-  }
-
-  private value(): number {
-    return this.x + this.y;
-  }
-
-  static min(...positions: GridPosition[]): GridPosition | undefined {
-    return mapMin(positions, position => position.value());
-  }
-
-  static max(...positions: GridPosition[]): GridPosition | undefined {
-    return mapMax(positions, position => position.value());
-  }
-
-  static minX(...positions: GridPosition[]): number {
-    return Math.min(...positions.map(position => position.x));
-  }
-
-  static maxX(...positions: GridPosition[]): number {
-    return Math.max(...positions.map(position => position.x));
-  }
-
-  static minY(...positions: GridPosition[]): number {
-    return Math.min(...positions.map(position => position.y));
-  }
-
-  static maxY(...positions: GridPosition[]): number {
-    return Math.max(...positions.map(position => position.y));
-  }
-}
-
-export class GridNode {
-  constructor(public readonly position: GridPosition) {
-  }
-
-  distance(otherNode: GridNode): Distance {
-    return this.position.manhattanDistance(otherNode.position);
-  }
-}
-
-export class GridGraph<T extends GridNode = GridNode> extends Graph<T> {
-  constructor(nodes: T[], private readonly diagonalsAreAdjacent = false) {
-    super(nodes);
-  }
-
-  public node(position: GridPosition): T | undefined {
-    return this.nodes.find(node => node.position.equals(position));
-  }
-
-  protected adjacent(node: T, otherNode: T): boolean {
-    const distance = node.distance(otherNode);
-    const distanceToCompare = this.diagonalsAreAdjacent ? Math.max(distance.x, distance.y) : distance.sum;
-
-    return distanceToCompare === 1;
+  protected createEdge(node: T, otherNode: T): Edge<T> {
+    return new Edge(node, otherNode);
   }
 }
