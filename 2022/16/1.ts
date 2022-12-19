@@ -54,9 +54,7 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
   const valvesWithFlowRate = graph.nodes.filter(node => node.flowRate);
   const startValve = graph.nodes.find(x => x.name === 'AA')!;
 
-  function mostReleasablePressureForSequence(nodeSequence: Valve[]): number {
-    let remainingSteps = maxSteps;
-    let node = startValve;
+  function mostReleasablePressureForSequence(nodeSequence: Valve[], node = startValve, remainingSteps = maxSteps): number {
     let pressureReleased = 0;
 
     while (remainingSteps > 0 && nodeSequence.length) {
@@ -119,17 +117,17 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
     orderSequenceByNormalisedPotentialPressureRelease([...valvesWithFlowRate]),
     potentialSolution => mostReleasablePressureForSequence([...potentialSolution]),
     potentialSolution => {
-      if (potentialSolution.remainingOptions.length > 5) {
-        const fixedSequence = potentialSolution.candidate();
-        const fixedSequencePressureReleased = mostReleasablePressureForSequence([...fixedSequence]);
-        const fixedSequenceStepCost = sequenceStepCost(fixedSequence);
-        const remainingSteps = maxSteps - fixedSequenceStepCost;
-        const lastStep = fixedSequence.at(-1)!;
+      const fixedSequence = potentialSolution.candidate();
+      const fixedSequencePressureReleased = mostReleasablePressureForSequence([...fixedSequence]);
+      const fixedSequenceStepCost = sequenceStepCost(fixedSequence);
+      const remainingSteps = maxSteps - fixedSequenceStepCost;
+      const lastFixedValve = fixedSequence.at(-1)!;
 
+      if (potentialSolution.remainingOptions.length > 5) {
         return potentialSolution.remainingOptions
-          .filter(x => pathWeight(shortestPathBetween(graph, lastStep, x)) + openCost < remainingSteps)
+          .filter(x => pathWeight(shortestPathBetween(graph, lastFixedValve, x)) + openCost < remainingSteps)
           .reduce(
-            (total, valve) => total + valve.potentialPressureRelease(remainingSteps) - pathWeight(shortestPathBetween(graph, lastStep, valve)) + openCost,
+            (total, valve) => total + valve.potentialPressureRelease(remainingSteps) - pathWeight(shortestPathBetween(graph, lastFixedValve, valve)) + openCost,
             fixedSequencePressureReleased,
           );
       }
@@ -137,16 +135,13 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
       return Math.max(
         ...Array
           .from(permute(potentialSolution.remainingOptions))
-          .map(permutation => mostReleasablePressureForSequence([
-            ...potentialSolution.candidate(),
-            ...permutation,
-          ])),
-      );
+          .map(permutation => mostReleasablePressureForSequence(permutation, lastFixedValve, remainingSteps)),
+      ) + fixedSequencePressureReleased;
     },
   );
 
-  console.log(bestSequence);
-  console.log(mostReleasablePressureForSequence(bestSequence));
+  console.log('Best sequence to open:', bestSequence.map(x => x.name).join(' -> '));
+  console.log('Pressure released:', mostReleasablePressureForSequence(bestSequence));
 })();
 
 // MO
