@@ -12,7 +12,7 @@ export class HeightmapGridGraph<T extends HeightmapGridNode = HeightmapGridNode>
     super(nodes);
   }
 
-  protected adjacent(node: T, otherNode: T): boolean {
+  public adjacent(node: T, otherNode: T): boolean {
     const heightDifference = otherNode.height - node.height;
 
     return super.adjacent(node, otherNode) && (

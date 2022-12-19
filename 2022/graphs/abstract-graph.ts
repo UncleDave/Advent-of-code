@@ -4,32 +4,41 @@ export class Edge<T> {
 }
 
 export abstract class AbstractGraph<TNode extends object, TEdge extends Edge<TNode> = Edge<TNode>> {
+  private readonly _nodes: TNode[];
   private outgoingEdges?: WeakMap<TNode, TEdge[]>;
   private incomingEdges?: WeakMap<TNode, TEdge[]>;
 
-  protected constructor(protected readonly nodes: TNode[]) {
+  constructor(nodes: TNode[]) {
+    this._nodes = nodes;
   }
 
-  public initEdges() {
-    const edges = this.nodes.flatMap(node => this.nodes.filter(otherNode => this.adjacent(node, otherNode)).map(otherNode => this.createEdge(node, otherNode)));
+  public get nodes(): ReadonlyArray<TNode> {
+    return this._nodes;
+  }
+
+  public initEdges(): void;
+  public initEdges(edges: TEdge[]): void;
+  public initEdges(edges?: TEdge[]) {
+    // Typescript is sus and won't narrow "edges ??= ..."
+    const notUndefinedEdges = edges ?? this._nodes.flatMap(node => this._nodes.filter(otherNode => this.adjacent(node, otherNode)).map(otherNode => this.createEdge(node, otherNode)));
 
     this.outgoingEdges = new WeakMap(
-      this.nodes.map(node => [
+      this._nodes.map(node => [
         node,
-        edges.filter(edge => edge.from === node),
+        notUndefinedEdges.filter(edge => edge.from === node),
       ]),
     );
 
     this.incomingEdges = new WeakMap(
-      this.nodes.map(node => [
+      this._nodes.map(node => [
         node,
-        edges.filter(edge => edge.to === node),
+        notUndefinedEdges.filter(edge => edge.to === node),
       ]),
     );
   }
 
   public removeNode(node: TNode) {
-    const nodeIndex = this.nodes.indexOf(node);
+    const nodeIndex = this._nodes.indexOf(node);
 
     if (nodeIndex === -1) return;
 
@@ -43,7 +52,11 @@ export abstract class AbstractGraph<TNode extends object, TEdge extends Edge<TNo
 
     this.outgoingEdges?.delete(node);
     this.incomingEdges?.delete(node);
-    this.nodes.splice(nodeIndex, 1);
+    this._nodes.splice(nodeIndex, 1);
+  }
+
+  public edge(node: TNode, otherNode: TNode): TEdge | undefined {
+    return this.edgesFrom(node).find(x => x.to === otherNode);
   }
 
   public edgesFrom(node: TNode): TEdge[] {
@@ -54,9 +67,29 @@ export abstract class AbstractGraph<TNode extends object, TEdge extends Edge<TNo
     return this.incomingEdges?.get(node) ?? [];
   }
 
-  protected abstract createEdge(node: TNode, otherNode: TNode): TEdge;
+  public addEdges(edges: TEdge[]) {
+    edges.forEach(edge => this.addEdge(edge));
+  }
 
-  protected adjacent(node: TNode, otherNode: TNode): boolean {
+  public addEdge(edge: TEdge) {
+    const fromNodeEdges = this.outgoingEdges?.get(edge.from);
+
+    if (fromNodeEdges)
+      fromNodeEdges.push(edge);
+    else
+      this.outgoingEdges?.set(edge.from, [edge]);
+
+    const toNodeEdges = this.incomingEdges?.get(edge.to);
+
+    if (toNodeEdges)
+      toNodeEdges.push(edge);
+    else
+      this.incomingEdges?.set(edge.to, [edge]);
+  }
+
+  public adjacent(node: TNode, otherNode: TNode): boolean {
     return node !== otherNode;
   }
+
+  protected abstract createEdge(node: TNode, otherNode: TNode): TEdge;
 }

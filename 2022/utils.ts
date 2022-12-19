@@ -1,8 +1,12 @@
 import { promises as fs } from 'fs';
 
 export async function getLinesFromFile(filePath: string): Promise<string[]> {
-  const fileContent = await fs.readFile(filePath, { encoding: 'utf-8' });
+  const fileContent = await readFileAsString(filePath);
   return fileContent.split('\n').filter(x => x !== '');
+}
+
+export function readFileAsString(filePath: string): Promise<string> {
+  return fs.readFile(filePath, { encoding: 'utf-8' });
 }
 
 function mapByValue<T>(values: T[], selector: (value: T) => number, comparator: (...values: number[]) => number): T | undefined {
@@ -58,6 +62,7 @@ export class SequentialLogger {
   }
 }
 
+// TODO: Refactor to generator or extend Array
 export function pairwise<T, U>(arrayLike: ArrayLike<T>, mapper: (firstValue: T, secondValue: T) => U): U[] {
   const result: U[] = [];
 
@@ -73,4 +78,32 @@ const defaultDistinctComparator: DistinctComparator<any> = (previousValue, curre
 
 export function distinct<T>(previousValue: T[], currentValue: T, comparator: DistinctComparator<T> = defaultDistinctComparator): T[] {
   return comparator(previousValue, currentValue) ? [...previousValue, currentValue] : previousValue;
+}
+
+export function* permute<T>(value: T[]): Generator<T[]> {
+  const length = value.length;
+  const counter: number[] = Array(length).fill(0);
+  let i = 1;
+
+  yield value.slice();
+  while (i < length) {
+    if (counter[i] < i) {
+      const k = i % 2 && counter[i];
+      const p = value[i];
+      value[i] = value[k];
+      value[k] = p;
+      ++counter[i];
+      i = 1;
+      yield value.slice();
+    } else {
+      counter[i] = 0;
+      ++i;
+    }
+  }
+}
+
+export function mapReduceSum<T>(mapper: (value: T) => number) {
+  return function mapReduceSum(total: number, current: T): number {
+    return total + mapper(current);
+  };
 }

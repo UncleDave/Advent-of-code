@@ -1,6 +1,6 @@
-import { GridPosition } from '../graphs/grid-graph';
 import { promises as fs } from 'fs';
 import { distinct, pairwise } from '../utils';
+import { GridPosition } from '../graphs/abstract-grid-graph';
 
 class Sensor {
   constructor(public readonly position: GridPosition, private readonly range: number) {

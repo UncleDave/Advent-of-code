@@ -7,7 +7,7 @@ export class DirectedAcyclicWeightedGridGraph<T extends GridNode = GridNode> ext
     super(nodes, getEdgeWeight, true);
   }
 
-  protected adjacent(node: T, otherNode: T): boolean {
+  public adjacent(node: T, otherNode: T): boolean {
     return super.adjacent(node, otherNode) && node.position.y - this.endY < otherNode.position.y - this.endY;
   }
 }

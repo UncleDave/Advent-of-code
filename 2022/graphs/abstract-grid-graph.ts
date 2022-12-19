@@ -74,7 +74,7 @@ export class GridNode {
 }
 
 export abstract class AbstractGridGraph<TNode extends GridNode = GridNode, TEdge extends Edge<TNode> = Edge<TNode>> extends AbstractGraph<TNode, TEdge> {
-  protected constructor(nodes: TNode[], private readonly diagonalsAreAdjacent = false) {
+  constructor(nodes: TNode[], private readonly diagonalsAreAdjacent = false) {
     super(nodes);
   }
 
@@ -82,7 +82,7 @@ export abstract class AbstractGridGraph<TNode extends GridNode = GridNode, TEdge
     return this.nodes.find(node => node.position.equals(position));
   }
 
-  protected adjacent(node: TNode, otherNode: TNode): boolean {
+  public adjacent(node: TNode, otherNode: TNode): boolean {
     const distance = node.distance(otherNode);
     const distanceToCompare = this.diagonalsAreAdjacent ? Math.max(distance.x, distance.y) : distance.sum;
 
