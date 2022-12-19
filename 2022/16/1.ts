@@ -127,7 +127,7 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
         return potentialSolution.remainingOptions
           .filter(x => pathWeight(shortestPathBetween(graph, lastFixedValve, x)) + openCost < remainingSteps)
           .reduce(
-            (total, valve) => total + valve.potentialPressureRelease(remainingSteps) - pathWeight(shortestPathBetween(graph, lastFixedValve, valve)) + openCost,
+            (total, valve) => total + valve.potentialPressureRelease(remainingSteps - pathWeight(shortestPathBetween(graph, lastFixedValve, valve)) + openCost),
             fixedSequencePressureReleased,
           );
       }
