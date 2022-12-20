@@ -109,6 +109,7 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
     }, 0);
   }
 
+  console.time();
   const bestSequence = maximise(
     valvesWithFlowRate.map(valve => new CombinationCandidateSolutionTree(
       valve,
@@ -117,28 +118,28 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
     orderSequenceByNormalisedPotentialPressureRelease([...valvesWithFlowRate]),
     potentialSolution => mostReleasablePressureForSequence([...potentialSolution]),
     potentialSolution => {
-      const fixedSequence = potentialSolution.candidate();
-      const fixedSequencePressureReleased = mostReleasablePressureForSequence([...fixedSequence]);
-      const fixedSequenceStepCost = sequenceStepCost(fixedSequence);
-      const remainingSteps = maxSteps - fixedSequenceStepCost;
-      const lastFixedValve = fixedSequence.at(-1)!;
+      const candidate = potentialSolution.candidate();
+      const remainingSteps = maxSteps - sequenceStepCost(candidate);
+      const candidatePressureReleased = mostReleasablePressureForSequence(candidate);
+      const lastValve = potentialSolution.current;
 
       if (potentialSolution.remainingOptions.length > 5) {
         return potentialSolution.remainingOptions
-          .filter(x => pathWeight(shortestPathBetween(graph, lastFixedValve, x)) + openCost < remainingSteps)
+          .filter(x => pathWeight(shortestPathBetween(graph, lastValve, x)) + openCost < remainingSteps)
           .reduce(
-            (total, valve) => total + valve.potentialPressureRelease(remainingSteps - pathWeight(shortestPathBetween(graph, lastFixedValve, valve)) + openCost),
-            fixedSequencePressureReleased,
+            (total, valve) => total + valve.potentialPressureRelease(remainingSteps - pathWeight(shortestPathBetween(graph, lastValve, valve)) - openCost),
+            candidatePressureReleased,
           );
       }
 
       return Math.max(
         ...Array
           .from(permute(potentialSolution.remainingOptions))
-          .map(permutation => mostReleasablePressureForSequence(permutation, lastFixedValve, remainingSteps)),
-      ) + fixedSequencePressureReleased;
+          .map(permutation => mostReleasablePressureForSequence(permutation, lastValve, remainingSteps)),
+      ) + candidatePressureReleased;
     },
   );
+  console.timeEnd();
 
   console.log('Best sequence to open:', bestSequence.map(x => x.name).join(' -> '));
   console.log('Pressure released:', mostReleasablePressureForSequence(bestSequence));
