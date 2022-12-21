@@ -42,8 +42,6 @@ interface BoundedCandidateSolutionTree<T, ST extends CandidateSolutionTree<T, ST
   upperBound: number;
 }
 
-// https://en.wikipedia.org/wiki/Branch_and_bound
-
 export function maximise<T, ST extends CandidateSolutionTree<T, ST>>(
   initialCandidates: ST[],
   heuristicSolution: T,
@@ -68,7 +66,9 @@ export function maximise<T, ST extends CandidateSolutionTree<T, ST>>(
   let currentBest = heuristicSolution;
 
   while (candidateQueue.peek()) {
-    const { candidateSolutionTree } = candidateQueue.pop()!;
+    const { candidateSolutionTree, upperBound } = candidateQueue.pop()!;
+
+    if (upperBound <= lowerBound) continue;
 
     if (candidateSolutionTree.isSingleCandidate()) {
       const candidate = candidateSolutionTree.candidate();
