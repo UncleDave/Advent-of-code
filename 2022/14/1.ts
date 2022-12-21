@@ -1,8 +1,8 @@
 import { AbstractGraph } from '../graphs/abstract-graph';
 import { DirectedAcyclicWeightedGridGraph } from '../graphs/directed-acyclic-weighted-grid-graph';
-import { GridNode, GridPosition } from '../graphs/grid-graph';
 import { WeightedGridGraph } from '../graphs/weighted-grid-graph';
 import { getLinesFromFile, mapMin, SequentialLogger } from '../utils';
+import { GridNode, GridPosition } from '../graphs/abstract-grid-graph';
 
 class Wall {
   constructor(public readonly start: GridPosition, public readonly end: GridPosition) {
@@ -129,5 +129,5 @@ function howMuchSandCouldASandChuckSandIfASandChuckCouldChuckSand(graph: Weighte
 
   await logger.write();
 
-  process.stdout.write(`Dropped ${allTheSand.length} sands`);
+  process.stdout.write(`Dropped ${ allTheSand.length } sands`);
 })();
