@@ -49,7 +49,7 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
       }),
   ));
 
-  const maxSteps = 30;
+  const maxSteps = 26;
   const openCost = 1;
   const valvesWithFlowRate = graph.nodes.filter(node => node.flowRate);
   const startValve = graph.nodes.find(x => x.name === 'AA')!;
@@ -109,6 +109,18 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
     }, 0);
   }
 
+  function mostReleasablePressureInParallel(nodeSequence: Valve[]): number {
+    const usedValves = nodeSequence.reduce<Valve[]>((sequence, valve) => {
+      const newSequence = [...sequence, valve];
+
+      return sequenceStepCost(newSequence) < maxSteps ? newSequence : sequence;
+    }, []);
+
+    const unusedValves = nodeSequence.filter(x => !usedValves.includes(x));
+
+    return mostReleasablePressureForSequence(usedValves) + mostReleasablePressureForSequence(unusedValves);
+  }
+
   console.time();
   const bestSequence = maximise(
     valvesWithFlowRate.map(valve => new CombinationCandidateSolutionTree(
@@ -116,25 +128,48 @@ const inputRegex = /(?<valve>[A-Z]{2}).+=(?<flow>\d+).+?(?<connected>(?:[A-Z]{2}
       valvesWithFlowRate.filter(otherValve => valve !== otherValve),
     )),
     orderSequenceByNormalisedPotentialPressureRelease([...valvesWithFlowRate]),
-    potentialSolution => mostReleasablePressureForSequence([...potentialSolution]),
+    mostReleasablePressureInParallel,
     potentialSolution => {
       const candidate = potentialSolution.candidate();
       const remainingSteps = maxSteps - sequenceStepCost(candidate);
-      const candidatePressureReleased = mostReleasablePressureForSequence(candidate);
+      const candidatePressureReleased = mostReleasablePressureForSequence([...candidate]);
       const lastValve = potentialSolution.current;
 
-      return potentialSolution.remainingOptions
+      const potentialPressureRelease = potentialSolution.remainingOptions
         .filter(valve => pathWeight(shortestPathBetween(graph, lastValve, valve)) + openCost < remainingSteps)
         .reduce(
           (total, valve) => total + valve.potentialPressureRelease(remainingSteps - pathWeight(shortestPathBetween(graph, lastValve, valve)) - openCost),
           candidatePressureReleased,
         );
+
+      const usedValves = candidate.reduce<Valve[]>((sequence, valve) => {
+        const newSequence = [...sequence, valve];
+
+        return sequenceStepCost(newSequence) < maxSteps ? newSequence : sequence;
+      }, []);
+
+      const unusedValves = candidate.filter(x => !usedValves.includes(x));
+
+      if (unusedValves.length) {
+        const unusedValvesRemainingSteps = maxSteps - sequenceStepCost(unusedValves);
+        const unusedValvesPressureReleased = mostReleasablePressureForSequence([...unusedValves]);
+        const lastUnusedValve = unusedValves.at(-1)!;
+
+        return potentialSolution.remainingOptions
+          .filter(valve => pathWeight(shortestPathBetween(graph, lastUnusedValve, valve)) + openCost < unusedValvesRemainingSteps)
+          .reduce(
+            (total, valve) => total + valve.potentialPressureRelease(unusedValvesRemainingSteps - pathWeight(shortestPathBetween(graph, lastUnusedValve, valve)) - openCost),
+            potentialPressureRelease + unusedValvesPressureReleased,
+          );
+      }
+
+      return potentialPressureRelease;
     },
   );
   console.timeEnd();
 
   console.log('Best sequence to open:', bestSequence.map(x => x.name).join(' -> '));
-  console.log('Pressure released:', mostReleasablePressureForSequence(bestSequence));
+  console.log('Pressure released:', mostReleasablePressureInParallel(bestSequence));
 })();
 
 // MO
