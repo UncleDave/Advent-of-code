@@ -132,8 +132,19 @@ export function* permute<T>(value: T[]): Generator<T[]> {
   }
 }
 
-export function mapReduceSum<T>(mapper: (value: T) => number) {
-  return function mapReduceSum(total: number, current: T): number {
-    return total + mapper(current);
+export function mapReduce<T, M, U>(
+  mapper: (value: T) => M,
+  reducer: (acc: U, current: M) => U,
+) {
+  return function mapReduce(acc: U, current: T): U {
+    return reducer(acc, mapper(current));
   };
+}
+
+export function mapReduceSum<T>(mapper: (value: T) => number) {
+  return mapReduce<T, number, number>(mapper, (acc, current) => acc + current);
+}
+
+export function mapReducePower<T>(mapper: (value: T) => number) {
+  return mapReduce<T, number, number>(mapper, (acc, current) => acc * current);
 }
