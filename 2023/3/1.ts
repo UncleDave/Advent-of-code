@@ -38,39 +38,35 @@ function getManhattanDistance(
     for (let charIndex = 0; charIndex < row.length; charIndex++) {
       const char = row[charIndex];
 
-      if (char === ".") {
-        if (currentNumber.length > 0) {
-          const spannedColumns: number[] = [];
-
-          for (let i = charIndex; i > currentNumber.length - charIndex; i--) {
-            spannedColumns.push(charIndex - i);
-          }
-
-          partNumbers.push({
-            value: Number(currentNumber),
-            row: rowIndex,
-            columns: spannedColumns,
-          });
-
-          currentNumber = "";
-        }
-
-        continue;
-      }
-
-      if (!isNaN(Number(char))) {
+      if (!isNaN(Number.parseInt(char))) {
         currentNumber += char;
         continue;
       }
 
-      symbolPositions.push([rowIndex, charIndex]);
+      if (char !== ".") symbolPositions.push([rowIndex, charIndex]);
+
+      if (currentNumber.length > 0) {
+        const spannedColumns: number[] = [];
+
+        for (let i = charIndex - currentNumber.length; i < charIndex; i++) {
+          spannedColumns.push(i);
+        }
+
+        partNumbers.push({
+          value: Number(currentNumber),
+          row: rowIndex,
+          columns: spannedColumns,
+        });
+
+        currentNumber = "";
+      }
     }
 
     if (currentNumber.length > 0) {
       const spannedColumns: number[] = [];
 
-      for (let i = row.length; i > currentNumber.length - row.length; i--) {
-        spannedColumns.push(row.length - i);
+      for (let i = row.length - currentNumber.length; i < row.length; i++) {
+        spannedColumns.push(i);
       }
 
       partNumbers.push({
@@ -78,6 +74,8 @@ function getManhattanDistance(
         row: rowIndex,
         columns: spannedColumns,
       });
+
+      currentNumber = "";
     }
   }
 
