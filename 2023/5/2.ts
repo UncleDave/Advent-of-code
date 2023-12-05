@@ -18,7 +18,7 @@ interface AlmanacMap {
 }
 
 function parseMap(map: string): Array<AlmanacMap> {
-  return map.split("\n").map((x) => {
+  return map.trim().split("\n").map((x) => {
     const [destinationStart, sourceStart, length] = x.split(" ").map(Number);
 
     return {
@@ -29,21 +29,16 @@ function parseMap(map: string): Array<AlmanacMap> {
   });
 }
 
-function mapSourceId(sourceId: number, map: AlmanacMap): number {
-  return sourceId >= map.sourceStart && sourceId < map.sourceStart + map.length
-    ? sourceId - map.sourceStart + map.destinationStart
-    : sourceId;
+function sortByDestinationStartAscending(a: AlmanacMap, b: AlmanacMap): number {
+  return a.destinationStart - b.destinationStart;
 }
 
-function getDestinationId(sourceId: number, maps: AlmanacMap[]): number {
-  return (
-    maps.map((map) => mapSourceId(sourceId, map)).find((x) => x !== sourceId) ??
-    sourceId
+function getSourceMapsInRange<
+  T extends { destinationStart: number; length: number },
+>(start: number, length: number, map: T[]): T[] {
+  return map.filter(
+    (x) => x.destinationStart >= start && x.destinationStart < start + length,
   );
-}
-
-function getDestinationOverlap(sourceStart: number, length: number, maps: AlmanacMap[]): [number, number] {
-
 }
 
 const inputRegex =
@@ -57,10 +52,10 @@ const inputRegex =
     throw new Error("Invalid input");
   }
 
-  const seedIds = pairwise(
+  const seedIdRanges = pairwise(
     matchGroups.seeds.split(" ").map(Number),
-    (start, length) => Array.from({ length }, (_, i) => start + i),
-  ).flat();
+    (start, length) => [start, length],
+  );
 
   const seedToSoil = parseMap(matchGroups.seedToSoil);
   const soilToFert = parseMap(matchGroups.soilToFert);
@@ -68,28 +63,54 @@ const inputRegex =
   const waterToLight = parseMap(matchGroups.waterToLight);
   const lightToTemp = parseMap(matchGroups.lightToTemp);
   const tempToHumid = parseMap(matchGroups.tempToHumid);
-  const humidToLoc = parseMap(matchGroups.humidToLoc);
+  const humidToLoc = parseMap(matchGroups.humidToLoc).sort(
+    sortByDestinationStartAscending,
+  );
 
-  const seeds = seedIds.map((id) => {
-    const soilId = getDestinationId(id, seedToSoil);
-    const fertilizerId = getDestinationId(soilId, soilToFert);
-    const waterId = getDestinationId(fertilizerId, fertToWater);
-    const lightId = getDestinationId(waterId, waterToLight);
-    const temperatureId = getDestinationId(lightId, lightToTemp);
-    const humidityId = getDestinationId(temperatureId, tempToHumid);
-    const locationId = getDestinationId(humidityId, humidToLoc);
+  const lowestLocationMap = humidToLoc.find((x) => {
+    const humidityMaps = getSourceMapsInRange(
+      x.sourceStart,
+      x.length,
+      tempToHumid,
+    );
 
-    return {
-      id,
-      soilId,
-      fertilizerId,
-      waterId,
-      lightId,
-      temperatureId,
-      humidityId,
-      locationId,
-    };
+    const tempMaps = humidityMaps.flatMap((humidityMap) =>
+      getSourceMapsInRange(
+        humidityMap.sourceStart,
+        humidityMap.length,
+        lightToTemp,
+      ),
+    );
+
+    const lightMaps = tempMaps.flatMap((tempMap) =>
+      getSourceMapsInRange(tempMap.sourceStart, tempMap.length, waterToLight),
+    );
+
+    const waterMaps = lightMaps.flatMap((lightMap) =>
+      getSourceMapsInRange(lightMap.sourceStart, lightMap.length, fertToWater),
+    );
+
+    const fertMaps = waterMaps.flatMap((waterMap) =>
+      getSourceMapsInRange(waterMap.sourceStart, waterMap.length, soilToFert),
+    );
+
+    const soilMaps = fertMaps.flatMap((fertMap) =>
+      getSourceMapsInRange(fertMap.sourceStart, fertMap.length, seedToSoil),
+    );
+
+    const seedMaps = soilMaps.flatMap((soilMap) =>
+      getSourceMapsInRange(
+        soilMap.sourceStart,
+        soilMap.length,
+        seedIdRanges.map(([start, length]) => ({
+          destinationStart: start,
+          length,
+        })),
+      ),
+    );
   });
 
-  console.log(mapMin(seeds, (seed) => seed.locationId)?.locationId);
+  if (!lowestLocationMap) {
+    throw new Error("No location found");
+  }
 })();
