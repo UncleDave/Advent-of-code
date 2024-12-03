@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="2024.1.2" type="NodeJSConfigurationType" path-to-node="node" path-to-js-file="2.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/2024/1">
+        <method v="2"/>
+    </configuration>
+</component>
