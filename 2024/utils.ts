@@ -132,6 +132,40 @@ export function* permute<T>(value: T[]): Generator<T[]> {
   }
 }
 
+export function permuteWithRepetition<T>(values: T[], length: number): T[][] {
+  // @ts-ignore
+  const replicateM = (n, f) => {
+    // @ts-ignore
+    const loop = (x) => (x <= 0 ? [[]] : liftA2(cons, f, loop(x - 1)));
+    return loop(n);
+  };
+
+  // @ts-ignore
+  const liftA2 = (f, a, b) => listApply(a.map(curry(f)), b);
+
+  // @ts-ignore
+  const listApply = (fs, xs) =>
+    [].concat.apply(
+      [],
+      // @ts-ignore
+      fs.map((f) =>
+        [].concat.apply(
+          [],
+          // @ts-ignore
+          xs.map((x) => [f(x)]),
+        ),
+      ),
+    );
+
+  // @ts-ignore
+  const curry = (f) => (a) => (b) => f(a, b);
+
+  // @ts-ignore
+  const cons = (x, xs) => [x].concat(xs);
+
+  return replicateM(length, values);
+}
+
 export function mapReduce<T, M, U>(
   mapper: (value: T) => M,
   reducer: (acc: U, current: M) => U,
