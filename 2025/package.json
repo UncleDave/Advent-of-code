@@ -1,0 +1,10 @@
+{
+  "name": "advent-of-code-2025",
+  "dependencies": {
+    "@tsconfig/node24": "24",
+    "@types/node": "24",
+    "prettier": "^3.7.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
