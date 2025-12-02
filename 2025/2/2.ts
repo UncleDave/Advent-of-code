@@ -39,33 +39,13 @@ class Range {
     const [start, end] = x.split("-").map(Number);
     return new Range(start, end);
   });
+  
+  const expression = /^(\d*)\1+$/;
 
   const sumOfInvalidIds = ranges.reduce(
     mapReduceSum((range) =>
       range
-        .filter((x) => {
-          const stringValue = x.toString();
-          const firstDigit = stringValue[0];
-
-          const repeatingSequences = Array.from(stringValue).reduce<string[]>(
-            (acc, curr, i, wholeThing) => {
-              if (curr === firstDigit && curr !== wholeThing[i - 1]) {
-                acc.push(curr);
-              } else {
-                acc[acc.length - 1] += curr;
-              }
-
-              return acc;
-            },
-            [],
-          );
-
-          return (
-            Array.from(stringValue).every((c) => c === firstDigit) ||
-            (repeatingSequences.length > 1 &&
-              repeatingSequences.every((x) => x === repeatingSequences[0]))
-          );
-        })
+        .filter((x) => expression.test(x.toString()))
         .reduce(
           mapReduceSum((x) => x),
           0,
