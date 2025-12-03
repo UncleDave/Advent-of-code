@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="2025.3.2" type="NodeJSConfigurationType" path-to-node="node" path-to-js-file="2.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/2025/3">
+    <EXTENSION ID="com.intellij.javascript.debugger.execution.StartBrowserRunConfigurationExtension">
+      <browser with-js-debugger="true" />
+    </EXTENSION>
+    <method v="2" />
+  </configuration>
+</component>
