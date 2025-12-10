@@ -3,6 +3,7 @@ import { getLinesFromFile } from "../utils";
 interface Machine {
   desiredLightState: number;
   buttonMasks: number[];
+  lightCount: number;
 }
 
 function bfs(
@@ -40,31 +41,43 @@ function bfs(
 
 function parseMachine(line: string): Machine {
   const parts = line.trim().split(" ");
+  const lights = Array.from(parts[0].slice(1, -1));
 
-  const desiredLightState = Array.from(parts[0].slice(1, -1)).reduce(
+  const desiredLightState = lights.reduce(
     (mask, char, index) => (char === "#" ? mask | (1 << index) : mask),
     0,
   );
 
-  const buttonMasks = Array.from(parts.slice(1, -1));
-  
-  
+  const buttonMasks = Array.from(parts.slice(1, -1)).map((group) => {
+    const indices = group.slice(1, -1).split(",").map(Number);
+    let mask = 0;
+
+    for (const idx of indices) {
+      mask |= 1 << idx;
+    }
+
+    return mask;
+  });
+
   return {
     desiredLightState,
     buttonMasks,
+    lightCount: lights.length,
   };
 }
 
 (async function () {
   const input = await getLinesFromFile("input.txt");
-  const splitInput = input.map((line) => line.trim().split(" "));
-
-  const machines = splitInput.map<Machine>((parts) => ({}));
+  const machines = input.map(parseMachine);
 
   const totalButtonsPressed = machines.reduce((sum, machine, i) => {
     console.log(`Processing machine ${i + 1}/${machines.length}...`);
 
-    return sum + bfs();
+    return sum + bfs(
+      machine.desiredLightState,
+      machine.buttonMasks,
+      machine.lightCount
+    );
   }, 0);
 
   console.log(`Total buttons pressed: ${totalButtonsPressed}`);
